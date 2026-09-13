@@ -1,0 +1,6 @@
+log.txt
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.pytest_cache/
