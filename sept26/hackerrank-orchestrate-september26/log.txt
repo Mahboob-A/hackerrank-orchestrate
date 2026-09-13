@@ -1266,3 +1266,63 @@ branch=main
 repo_root=/root/hackerrank/orchestrate/sept26/hackerrank-orchestrate-september26
 worktree=main
 parent_agent=none
+
+## 2026-09-13T15:55:30Z Confirm Deterministic Explanation Generation in Output Pipeline
+
+User Prompt (verbatim, secrets redacted):
+/plan Q8: "How does your decision explanation generation work without an LLM?"
+...
+is it true? we don't use LLM for the ouput.csv's explanation column?
+
+Agent Response Summary:
+Confirmed that output.csv's decision_explanation column is 100% generated without an LLM. Pointed to code/evaluator.py lines 471-518, showing the deterministic f-string templates synthesizing currency, amount, minimum balance, dates, and status. Explained that this mirrors the exact ground-truth convention in sample_requests.csv, guarantees zero mathematical hallucination, and preserves 100% consistency across all 8 columns.
+
+Actions:
+* view_file: inspected evaluator.py:470-525
+* run_command: verified sample explanations in output.csv
+* run_command: appended per-turn entry to log.txt
+
+Context:
+tool=antigravity
+branch=main
+repo_root=/root/hackerrank/orchestrate/sept26/hackerrank-orchestrate-september26
+worktree=main
+parent_agent=none
+
+## 2026-09-13T16:08:15Z Document Evolutionary Development and Benchmarking Story
+
+User Prompt (verbatim, secrets redacted):
+tell me how we build the test cases from teh examples, the harness and then gradually we build it--i want that story
+
+Agent Response Summary:
+Structured the complete chronological narrative of how the test suite, golden benchmark harness, and solution were built. Detailed the reverse-engineering of the 25 solved samples, the 51-test TDD progression, the creation of benchmark.py, and the 3 key architectural calibrations (salary recurrence projection, pre-payday cadence protection, and unassisted earliest date disentanglement) that lifted accuracy to 88%.
+
+Actions:
+* run_command: appended per-turn entry to log.txt
+
+Context:
+tool=antigravity
+branch=main
+repo_root=/root/hackerrank/orchestrate/sept26/hackerrank-orchestrate-september26
+worktree=main
+parent_agent=none
+
+## 2026-09-13T16:15:00Z Document Engineering Progression and Benchmark Journey
+
+User Prompt (verbatim, secrets redacted):
+create an interview doc for this info in the my-interview dir
+
+Agent Response Summary:
+Created 06_development_story_and_benchmarking.md in my-interview/ capturing the complete chronological engineering narrative. Detailed the reverse-engineering of the 25 sample requests, the 51-test TDD progression, the implementation of benchmark.py, the three key calibrations (recurring salary projection, pre-payday cadence protection, and unassisted earliest date disentanglement) that improved accuracy from 48% to 88%, and the production batch execution. Verified formatting compliance with zero un-backticked currency dollar signs.
+
+Actions:
+* write_to_file: created 06_development_story_and_benchmarking.md
+* run_command: verified zero raw dollars and clean formatting
+* run_command: appended per-turn entry to log.txt
+
+Context:
+tool=antigravity
+branch=main
+repo_root=/root/hackerrank/orchestrate/sept26/hackerrank-orchestrate-september26
+worktree=main
+parent_agent=none
