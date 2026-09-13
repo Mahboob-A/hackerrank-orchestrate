@@ -52,7 +52,7 @@
 ### Q6: "Why didn't you use an LLM (like GPT-4o or Claude) to evaluate financial affordability?"
 - **The Trap:** The AI Judge expects candidates to justify why an AI hackathon submission used deterministic code.
 - **Model Answer:**  
-  *"Financial solvency is an exact mathematical property, not a semantic approximation. LLMs are probabilistic autoregressive token generators; they suffer from arithmetic hallucinations, cannot reliably maintain multi-step 90-day balance subtractions, and exhibit non-deterministic float drift. Furthermore, our deterministic solution delivers 100% mathematical safety, runs in 4.87 seconds, costs exactly $0.00, and runs offline in air-gapped evaluation sandboxes with zero external dependencies."*
+  *"Financial solvency is an exact mathematical property, not a semantic approximation. LLMs are probabilistic autoregressive token generators; they suffer from arithmetic hallucinations, cannot reliably maintain multi-step 90-day balance subtractions, and exhibit non-deterministic float drift. Furthermore, our deterministic solution delivers 100% mathematical safety, runs in 4.87 seconds, costs exactly `$0.00`, and runs offline in air-gapped evaluation sandboxes with zero external dependencies."*
 - **Code Anchor:** `evaluation/usage_report.md`, `code/decisions.md:ADR-003`.
 
 ---
@@ -68,15 +68,15 @@
 ### Q8: "How does your decision explanation generation work without an LLM?"
 - **The Trap:** Asking if rule-based explanations are rigid or robotic.
 - **Model Answer:**  
-  *"We generate deterministic, factual explanations dynamically in `code/evaluator.py`. The explanation synthesizes the exact financial facts: current balance, reserved debits, minimum balance buffer, the bottleneck date, and the specific reason for the recommendation (e.g., 'Affordable now: balance of $2,400 covers $500 purchase while preserving $1,000 reserve through next payday on 2026-10-01'). This guarantees every explanation is truthful, verifiable, and free of conversational fluff."*
+  *"We generate deterministic, factual explanations dynamically in `code/evaluator.py`. The explanation synthesizes the exact financial facts: current balance, reserved debits, minimum balance buffer, the bottleneck date, and the specific reason for the recommendation (e.g., 'Affordable now: balance of `$2,400` covers `$500` purchase while preserving `$1,000` reserve through next payday on 2026-10-01'). This guarantees every explanation is truthful, verifiable, and free of conversational fluff."*
 - **Code Anchor:** `code/evaluator.py:380-420`.
 
 ---
 
-### Q9: "If you had a budget of $10,000 and 100,000 requests/day, how would this architecture scale?"
+### Q9: "If you had a budget of `$10,000` and 100,000 requests/day, how would this architecture scale?"
 - **The Trap:** Testing systems scalability and cloud architecture knowledge.
 - **Model Answer:**  
-  *"Our architecture scales linearly and cheaply. At 51 requests/second on a single CPU core, a modest 4-core container handles ~200 requests/second (over 17 million requests/day) at less than $50/month in compute, with $0.00 in LLM token costs. An LLM pipeline for 100k requests/day would cost ~$5,000/month in API tokens and require complex queueing to survive rate limits. Our deterministic engine is production-ready for high-throughput fintech infrastructure."*
+  *"Our architecture scales linearly and cheaply. At 51 requests/second on a single CPU core, a modest 4-core container handles ~200 requests/second (over 17 million requests/day) at less than `$50`/month in compute, with `$0.00` in LLM token costs. An LLM pipeline for 100k requests/day would cost ~`$5,000`/month in API tokens and require complex queueing to survive rate limits. Our deterministic engine is production-ready for high-throughput fintech infrastructure."*
 
 ---
 
@@ -92,7 +92,7 @@
 ### Q11: "How do you calculate `amount_safe_to_pay` on `request_date`?"
 - **The Trap:** Probing whether you just subtract minimum balance from current balance.
 - **Model Answer:**  
-  *"We do not use current balance. We run a 90-day forward cashflow simulation with zero candidate purchases to find the unassisted baseline trajectory. We compute the minimum headroom over all 90 days: $H = \min_{t} (\text{balance}(t) - \text{minimum\_balance\_to\_keep})$. The amount safe to pay is $\max(0, \min(\text{requested\_amount}, H))$. If a user has $5,000 today but their balance drops to $1,200 on Day 20 against a $1,000 minimum balance, their safe amount is $200, not $4,000."*
+  *"We do not use current balance. We run a 90-day forward cashflow simulation with zero candidate purchases to find the unassisted baseline trajectory. We compute the minimum headroom over all 90 days: `headroom = min(balance(t) - minimum_balance_to_keep)`. The amount safe to pay is `max(0.0, min(requested_amount, headroom))`. If a user has `$5,000` today but their balance drops to `$1,200` on Day 20 against a `$1,000` minimum balance, their safe amount is `$200`, not `$4,000`."*
 - **Code Anchor:** `code/evaluator.py:65-95`.
 
 ---
@@ -108,7 +108,7 @@
 ### Q13: "What is 'Pre-Payday Cadence Protection' and why did you implement it?"
 - **The Trap:** Probing an advanced calibration you made during the hackathon.
 - **Model Answer:**  
-  *"In real-world data, recurring expenses like groceries or transit might occur on the 1st and 15th. If a user makes a request on the 28th (2 days before their monthly salary on the 30th), the raw dataset might show zero scheduled transactions in those 2 days. A naive simulator assumes zero cost of living and approves a purchase that drains their account. Our pre-payday protection detects this blind spot and injects a prorated baseline necessity burn rate over $[t_{\text{request}}, t_{\text{payday}}]$."*
+  *"In real-world data, recurring expenses like groceries or transit might occur on the 1st and 15th. If a user makes a request on the 28th (2 days before their monthly salary on the 30th), the raw dataset might show zero scheduled transactions in those 2 days. A naive simulator assumes zero cost of living and approves a purchase that drains their account. Our pre-payday protection detects this blind spot and injects a prorated baseline necessity burn rate over `[request_date, next_payday]`."*
 - **Code Anchor:** `code/forecaster.py:213-244`.
 
 ---
@@ -142,7 +142,7 @@
 ### Q17: "How do you prevent floating-point drift over a 90-day simulation?"
 - **The Trap:** Checking currency math hygiene.
 - **Model Answer:**  
-  *"We enforce 2-decimal rounding (`round(amount, 2)`) at every balance update step and use integer formatting for output values when amounts are whole numbers, matching the ground-truth convention. In comparisons against the minimum balance floor, we apply an epsilon guard of $10^{-5}$ to prevent precision artifacts from causing false rejections."*
+  *"We enforce 2-decimal rounding (`round(amount, 2)`) at every balance update step and use integer formatting for output values when amounts are whole numbers, matching the ground-truth convention. In comparisons against the minimum balance floor, we apply an epsilon guard of `1e-5` to prevent precision artifacts from causing false rejections."*
 - **Code Anchor:** `code/forecaster.py:275-285`, `code/formatter.py:35-50`.
 
 ---
@@ -158,7 +158,7 @@
 ### Q19: "What if a user has a negative starting balance?"
 - **The Trap:** Testing an extreme boundary condition.
 - **Model Answer:**  
-  *"The engine handles negative balances seamlessly. The baseline headroom $H$ immediately computes as negative. `calculate_amount_safe_to_pay` clamps to $0.00$. Full payment now and partial payment are disqualified. The evaluator scans future paydays to determine if future confirmed salary settlements bring the account out of overdraft and above `minimum_balance_to_keep`. If not within 90 days, it returns `not_affordable` with `not_recommended`."*
+  *"The engine handles negative balances seamlessly. The baseline headroom immediately computes as negative. `calculate_amount_safe_to_pay` clamps to `0.00`. Full payment now and partial payment are disqualified. The evaluator scans future paydays to determine if future confirmed salary settlements bring the account out of overdraft and above `minimum_balance_to_keep`. If not within 90 days, it returns `not_affordable` with `not_recommended`."*
 
 ---
 
@@ -197,7 +197,7 @@
 ### Q23: "Why did you build your own benchmark harness instead of just manual checking?"
 - **The Trap:** Testing your engineering maturity and feedback loop discipline.
 - **Model Answer:**  
-  *"Manual inspection of 25 multi-field rows across 200 data points is error-prone. Our automated benchmark computed exact match rates across all 7 evaluated fields, highlighted string diffs on payment plans, and computed tolerance intervals ($5\%$ relative error and $\$0.05$ exact tolerance). This allowed us to iterate with rapid, objective feedback during algorithmic calibrations."*
+  *"Manual inspection of 25 multi-field rows across 200 data points is error-prone. Our automated benchmark computed exact match rates across all 7 evaluated fields, highlighted string diffs on payment plans, and computed tolerance intervals (5% relative error and `$0.05` exact tolerance). This allowed us to iterate with rapid, objective feedback during algorithmic calibrations."*
 
 ---
 

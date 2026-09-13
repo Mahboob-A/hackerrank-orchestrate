@@ -5,7 +5,7 @@ When the HackerRank AI Judge asks you:
 > *"Walk me through the high-level architecture of your solution. Why did you choose this architecture, and why did you decide against using an LLM inference pipeline for financial decisions?"*
 
 You must answer from a position of **senior systems engineering authority**:
-> *"We designed a 4-layer unidirectional deterministic simulation engine. In financial systems, solvency is binary and safety requires strict mathematical guarantees. We deliberately rejected an end-to-end LLM inference pipeline because LLMs are probabilistic, prone to arithmetic hallucination, suffer from floating-point drift, and introduce latency and non-zero inference costs. Instead, we used a pure Python 3.12 standard library engine that reconstructs the user's forward cashflow trajectory day-by-day over 90 days, guaranteeing hard preservation of their minimum reserve with zero external API dependencies, microsecond latency, and $0.00 cost."*
+> *"We designed a 4-layer unidirectional deterministic simulation engine. In financial systems, solvency is binary and safety requires strict mathematical guarantees. We deliberately rejected an end-to-end LLM inference pipeline because LLMs are probabilistic, prone to arithmetic hallucination, suffer from floating-point drift, and introduce latency and non-zero inference costs. Instead, we used a pure Python 3.12 standard library engine that reconstructs the user's forward cashflow trajectory day-by-day over 90 days, guaranteeing hard preservation of their minimum reserve with zero external API dependencies, microsecond latency, and `$0.00` cost."*
 
 ---
 
@@ -13,7 +13,7 @@ You must answer from a position of **senior systems engineering authority**:
 
 Our system is structured into four distinct, loosely coupled layers with strict unidirectional data flow:
 
-```
+```text
                   ┌─────────────────────────────────────────────────┐
                   │          Input Datasets (dataset/*.csv)         │
                   │  (profiles, events, options, rates, msgs, imgs) │
@@ -80,9 +80,9 @@ This is the **#1 question** the AI Judge will ask to test if you understand syst
 | Dimension | LLM Inference Pipeline (e.g. GPT-4o / Claude 3.5) | Our Deterministic Simulation Engine |
 |---|---|---|
 | **Mathematical Precision** | **Probabilistic.** Prone to arithmetic hallucination, compounding errors over multi-step 90-day forecasting. | **Deterministic.** Exact arithmetic, zero float drift, provable invariants. |
-| **Solvency Guarantee** | **Cannot guarantee safety.** Might approve an expense that breaches minimum balance on day 43. | **Hard safety invariant.** Every single day $t \in [0, 90]$ is evaluated against `minimum_balance_to_keep`. |
-| **Cost** | **High.** ~1,500 input + 300 output tokens per request. 250 requests $\times$ $0.05 \approx$ **$12.50 – $35.00**. | **Zero ($0.00).** Pure Python standard library. |
-| **Execution Latency** | **Slow.** 1.5 – 3.5 seconds per request $\rightarrow$ **6 to 15 minutes** for 250 requests. | **Ultra-fast.** **4.87 seconds** for all 250 requests (~51 requests/sec). |
+| **Solvency Guarantee** | **Cannot guarantee safety.** Might approve an expense that breaches minimum balance on day 43. | **Hard safety invariant.** Every single day in the 90-day horizon is evaluated against `minimum_balance_to_keep`. |
+| **Cost** | **High.** ~1,500 input + 300 output tokens per request. 250 requests × `$0.05` ≈ **`$12.50` – `$35.00`**. | **Zero (`$0.00`).** Pure Python standard library. |
+| **Execution Latency** | **Slow.** 1.5 – 3.5 seconds per request → **6 to 15 minutes** for 250 requests. | **Ultra-fast.** **4.87 seconds** for all 250 requests (~51 requests/sec). |
 | **Offline Sandbox Reproducibility** | **Fragile.** Requires external API keys, network access, and is vulnerable to rate limits and API downtime. | **100% Air-Gapped.** Runs anywhere Python 3.12 is installed without internet access. |
 | **Auditability & Explainability** | **Opaque black-box.** Non-deterministic explanations that cannot be mathematically audited. | **Fully transparent trace.** Exact balance curve, exact bottleneck date, exact cost delta. |
 
@@ -100,7 +100,7 @@ Be ready to cite these specific ADRs:
 
 ### ADR-001: Deterministic Multilingual Message Extraction vs. LLM Translation
 - **Context:** `messages.csv` contains 37 messages in Indonesian (Bahasa Indonesia) and English detailing payroll bonuses, arrears, salary deductions, and purchase cancellations.
-- **Decision:** Implemented regex-based pattern matching in `code/multimodal.py` with bilingual keyword maps (`gaji` $\rightarrow$ salary, `bonus` $\rightarrow$ bonus, `potongan` $\rightarrow$ deduction, `dibatalkan` $\rightarrow$ cancelled).
+- **Decision:** Implemented regex-based pattern matching in `code/multimodal.py` with bilingual keyword maps (`gaji` → salary, `bonus` → bonus, `potongan` → deduction, `dibatalkan` → cancelled).
 - **Trade-off:**
   - *Advantage:* Zero latency, zero external API cost, immune to translation hallucinations.
   - *Limitation:* Less flexible if unexpected open-domain slang is introduced. However, for structured banking SMS messages, regex is strictly superior.
@@ -116,7 +116,7 @@ Be ready to cite these specific ADRs:
 - **Context:** A naive agent might check `current_balance - requested_amount >= minimum_balance`.
 - **Decision:** Built a forward daily simulation loop in `code/forecaster.py` projecting daily inflows and outflows over 90 days.
 - **Trade-off:**
-  - *Why it matters:* A user with \$5,000 balance might have \$4,500 rent due in 3 days. A static balance check would approve a \$1,000 laptop, causing an overdraft on day 3. Our simulation tracks the minimum balance headroom across the entire 90-day trajectory.
+  - *Why it matters:* A user with `$5,000` balance might have `$4,500` rent due in 3 days. A static balance check would approve a `$1,000` laptop, causing an overdraft on day 3. Our simulation tracks the minimum balance headroom across the entire 90-day trajectory.
 
 ### ADR-004: 6-Tier Lexicographical Pareto Comparator
 - **Context:** When multiple payment methods (full, partial, installments) and spending change permutations are viable, how do we pick the optimal recommendation?

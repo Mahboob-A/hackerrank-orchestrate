@@ -59,10 +59,14 @@ You need to demonstrate that you know every single line of code and the exact fo
     - **Step 3:** Identifies recurring salary cadence (excluding one-off bonuses, gig income, arrears) and projects future salary settlements.
     - **Step 4 (Pre-Payday Cadence Injection):** If `request_date` falls in the interval before the next salary settlement, injects a baseline cadence for necessities (`groceries`, `transport`) if none existed in that window, preventing an artificially inflated initial safe balance.
     - **Step 5 (Spending Adjustments):** Applies `stop` (zeros the expense) or `reduce_to` (caps the expense) to flexible recurring events.
-    - **Step 6 (Daily Trajectory):** Steps through day $t = 0 \dots 90$. At each day:
-      $$\text{balance}(t) = \text{balance}(t-1) + \text{inflows}(t) - \text{outflows}(t) - \text{payments}(t)$$
+    - **Step 6 (Daily Trajectory):** Steps through day `t = 0 ... 90`. At each day:
+      ```text
+      balance(t) = balance(t-1) + inflows(t) - outflows(t) - payments(t)
+      ```
       Checks the safety condition:
-      $$\text{balance}(t) \ge \text{user.minimum\_balance\_to\_keep}$$
+      ```text
+      balance(t) >= user.minimum_balance_to_keep
+      ```
     - Returns `SimulationResult` with boolean `is_safe`, `min_balance_reached`, and `bottleneck_date`.
 
 ---
@@ -73,12 +77,17 @@ You need to demonstrate that you know every single line of code and the exact fo
   - `calculate_amount_safe_to_pay(user, events, request_date, requested_amount) -> float`:
     - Computes the unassisted baseline cashflow over 90 days.
     - Finds the minimum headroom buffer:
-      $$\text{headroom} = \min_{t \in [0, 90]} \big(\text{balance}(t) - \text{minimum\_balance\_to\_keep}\big)$$
-    - Returns $\max\big(0.0, \min(\text{requested\_amount}, \text{headroom})\big)$.
+      ```text
+      headroom = min(balance(t) - user.minimum_balance_to_keep)  for t in [0, 90]
+      ```
+    - Returns:
+      ```text
+      amount_safe_to_pay = max(0.0, min(requested_amount, headroom))
+      ```
   - `find_earliest_date_for_full_payment(user, events, request, skip_request_date=False) -> Optional[str]`:
     - Scans candidate dates: `request_date`, upcoming paydays, day after paydays, and scheduled credit dates up to 90 days out.
-    - Tests paying `requested_amount` as a single lump sum on date $D$.
-    - Returns the earliest date $D$ that maintains the 90-day minimum balance invariant without requiring spending changes.
+    - Tests paying `requested_amount` as a single lump sum on date `D`.
+    - Returns the earliest date `D` that maintains the 90-day minimum balance invariant without requiring spending changes.
   - `evaluate_request(request, user, events, options) -> EvaluationResult`:
     - Tests Strategy 1: Full Payment on `request_date`.
     - Tests Strategy 2: Partial Payment (Pay `amount_safe_to_pay` on `request_date`, pay remainder on `earliest_date_for_full_payment` if within `desired_completion_date`).
@@ -96,44 +105,56 @@ You need to demonstrate that you know every single line of code and the exact fo
   - Formats payment plan string: `YYYY-MM-DD:amount|YYYY-MM-DD:amount` or `none`.
   - Formats spending changes: `stop:event_id|reduce_to:event_id:amount` or `none`.
   - Validates schema bounds:
-    - $0 \le \text{amount\_safe\_to\_pay} \le \text{requested\_amount}$.
-    - `earliest_date_for_full_payment == request_date` if `affordable_now`.
-    - Partial payment adds up to exactly `requested_amount`.
-    - No non-flexible event modified.
+    - `0 <= amount_safe_to_pay <= requested_amount`
+    - `earliest_date_for_full_payment == request_date` if `affordable_now`
+    - Partial payment adds up to exactly `requested_amount`
+    - No non-flexible event modified
 
 ---
 
 ## 2. Core Algorithmic Mathematics
 
-Be ready to write these formulas on a virtual whiteboard or explain them verbally:
+Be ready to explain these formulas or write them on a virtual whiteboard:
 
-### 1. Bottleneck Reserve Headroom ($H$)
-For a given payment schedule $P$, the balance on day $t$ is:
-$$\text{balance}(t) = B_0 + \sum_{k=0}^{t} \big(\text{inflow}(k) - \text{outflow}(k) - P(k)\big)$$
-The minimum buffer over the 90-day horizon is:
-$$H = \min_{t \in [0, 90]} \big(\text{balance}(t) - \text{reserve}_{\text{min}}\big)$$
+### 1. Bottleneck Reserve Headroom
+For a given candidate payment schedule `P`, the balance on day `t` is:
+```text
+balance(t) = balance_0 + SUM_{k=0}^{t} ( inflow(k) - outflow(k) - P(k) )
+```
+The minimum reserve headroom buffer over the 90-day horizon is:
+```text
+headroom = MIN_{t in [0, 90]} ( balance(t) - minimum_balance_to_keep )
+```
 A payment schedule is **safe** if and only if:
-$$H \ge 0$$
+```text
+headroom >= 0
+```
 
 ---
 
 ### 2. Unassisted Safe Amount on Request Date
-$$\text{amount\_safe\_to\_pay} = \max\Big(0.0, \, \min\big(\text{requested\_amount}, \, H_{\text{baseline}}\big)\Big)$$
-Where $H_{\text{baseline}}$ is calculated with $P(t) = 0$ for all $t$.
+```text
+amount_safe_to_pay = max(0.0, min(requested_amount, baseline_headroom))
+```
+Where `baseline_headroom` is computed with `P(t) = 0` for all `t` (no candidate purchases applied).
 
 ---
 
 ### 3. Strict 2-Payment Partial Plan
 Partial payment is allowed if and only if:
 1. `is_partial_allowed == True` on the request.
-2. $0 < \text{amount\_safe\_to\_pay} < \text{requested\_amount}$.
-3. $\text{earliest\_date\_for\_full\_payment} \le \text{desired\_completion_date}$.
+2. `0 < amount_safe_to_pay < requested_amount`.
+3. `earliest_date_for_full_payment <= desired_completion_date`.
 
 The payment plan is constructed as:
-$$\text{Payment}_1 = (\text{request\_date}, \, \text{amount\_safe\_to\_pay})$$
-$$\text{Payment}_2 = (\text{earliest\_date\_for\_full\_payment}, \, \text{requested\_amount} - \text{amount\_safe\_to\_pay})$$
+```text
+Payment_1 = (request_date, amount_safe_to_pay)
+Payment_2 = (earliest_date_for_full_payment, requested_amount - amount_safe_to_pay)
+```
 Sum invariant:
-$$\text{Payment}_1 + \text{Payment}_2 \equiv \text{requested\_amount}$$
+```text
+Payment_1 + Payment_2 == requested_amount
+```
 
 ---
 
