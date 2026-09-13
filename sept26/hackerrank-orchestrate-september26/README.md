@@ -2,6 +2,8 @@
 
 Starter and evaluation package for the **HackerRank Orchestrate** 24-hour hackathon challenge (September 2026).
 
+-> Hackathon Link: https://github.com/interviewstreet/hackerrank-orchestrate-september26
+
 ---
 
 ## 1. Overview
